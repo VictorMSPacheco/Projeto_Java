@@ -1,19 +1,18 @@
 package com.mycompany.testerodrigo;
 
-import javax.swing.*;
+import javax.swing.JFrame;
 
 public class Main {
     public static void main(String[] args) {
-        // ConfiguraÃ§Ã£o da base de dados
-        DatabaseSetup.main(null);
-
-        // Iniciar a interface grÃ¡fica
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Agendamento de Consulta de BioimpedÃ¢ncia");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(400, 400);
-            frame.add(new SchedulingPanel());
-            frame.setVisible(true);
-        });
+        // Criar a janela principal do aplicativo
+        JFrame frame = new JFrame("Agendamento de Consulta de Bioimpedância");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(400, 400);
+        
+        // Adicionar o painel de agendamento à janela
+        frame.add(new SchedulingPanel());
+        
+        // Tornar a janela visível
+        frame.setVisible(true);
     }
 }

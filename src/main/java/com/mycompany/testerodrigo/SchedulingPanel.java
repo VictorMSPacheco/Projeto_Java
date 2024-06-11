@@ -21,8 +21,8 @@ public class SchedulingPanel extends JPanel {
     public SchedulingPanel() {
         setLayout(new GridLayout(6, 2));
 
-        // Matr√≠cula
-        add(new JLabel("Matr√≠cula:"));
+        // MatrÌcula
+        add(new JLabel("MatrÌcula:"));
         matriculaField = new JTextField();
         add(matriculaField);
 
@@ -41,12 +41,12 @@ public class SchedulingPanel extends JPanel {
         dateComboBox = new JComboBox<>(getNext7Days());
         add(dateComboBox);
 
-        // Hor√°rio
-        add(new JLabel("Hor√°rio:"));
+        // Hor·rio
+        add(new JLabel("Hor·rio:"));
         timeComboBox = new JComboBox<>(getTimeSlots());
         add(timeComboBox);
 
-        // Bot√£o de Agendamento
+        // Bot„o de Agendamento
         scheduleButton = new JButton("Agendar Consulta");
         scheduleButton.addActionListener(new ScheduleButtonListener());
         add(scheduleButton);
@@ -74,30 +74,29 @@ public class SchedulingPanel extends JPanel {
             String date = (String) dateComboBox.getSelectedItem();
             String time = (String) timeComboBox.getSelectedItem();
 
-            // Valida√ß√£o b√°sica
+            // ValidaÁ„o b·sica
             if (matricula.isEmpty() || name.isEmpty() || cpf.isEmpty() || date.isEmpty() || time.isEmpty()) {
                 JOptionPane.showMessageDialog(SchedulingPanel.this, "Por favor, preencha todos os campos.", "Erro", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Salvar no banco de dados
-            String url = "jdbc:sqlite:agendamento.db";
-            String sql = "INSERT INTO agendamentos(matricula, nome, cpf, data, horario) VALUES(?, ?, ?, ?, ?)";
+            String url = "jdbc:sqlite:academia.db";
+            String sql = "INSERT INTO TB_CONSULTA(horario_consulta, id_cliente, id_colaborador) VALUES(?, ?, ?)";
 
             try (Connection conn = DriverManager.getConnection(url);
                  PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setString(1, matricula);
-                pstmt.setString(2, name);
-                pstmt.setString(3, cpf);
-                pstmt.setString(4, date);
-                pstmt.setString(5, time);
+                // Para simplificar, estamos usando valores fixos para id_cliente e id_colaborador.
+                // Em uma aplicaÁ„o real, esses valores viriam de uma lÛgica de seleÁ„o/lookup adequada.
+                pstmt.setString(1, date + " " + time); // Combinando data e hor·rio
+                pstmt.setInt(2, 1); // id_cliente, deve ser obtido de uma consulta real
+                pstmt.setInt(3, 1); // id_colaborador, deve ser obtido de uma consulta real
                 pstmt.executeUpdate();
                 JOptionPane.showMessageDialog(SchedulingPanel.this, "Consulta agendada com sucesso!");
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(SchedulingPanel.this, "Erro ao agendar consulta: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
 
-            // Exibir tela de confirma√ß√£o
+            // Exibir tela de confirmaÁ„o
             JFrame confirmationFrame = new JFrame("Consulta Agendada");
             confirmationFrame.setSize(300, 200);
             confirmationFrame.add(new ConfirmationPanel(name, date, time));
