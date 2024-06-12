@@ -11,16 +11,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class LoginPanel extends JPanel {
-    private JTextField matriculaField;
+    private JTextField idColaboradorField;
     private JButton loginButton;
 
     public LoginPanel() {
         setLayout(new GridLayout(3, 2));
 
-        // Matrícula
-        add(new JLabel("Matrícula:"));
-        matriculaField = new JTextField();
-        add(matriculaField);
+        // ID Colaborador
+        add(new JLabel("ID Colaborador:"));
+        idColaboradorField = new JTextField();
+        add(idColaboradorField);
 
         // Botão de Login
         loginButton = new JButton("Login");
@@ -31,20 +31,21 @@ public class LoginPanel extends JPanel {
     private class LoginButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            String matricula = matriculaField.getText();
+            String idColaborador = idColaboradorField.getText();
 
             // Validação básica
-            if (matricula.isEmpty()) {
-                JOptionPane.showMessageDialog(LoginPanel.this, "Por favor, insira a matrícula.", "Erro", JOptionPane.ERROR_MESSAGE);
+            if (idColaborador.isEmpty()) {
+                JOptionPane.showMessageDialog(LoginPanel.this, "Por favor, insira o ID do colaborador.", "Erro", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             String url = "jdbc:sqlite:academia.db";
-            String sql = "SELECT * FROM TB_COLABORADOR WHERE id_colaborador = ?";
+            String sql = "SELECT nome_colaborador, id_horario FROM TB_COLABORADOR WHERE id_colaborador = ?";
 
             try (Connection conn = DriverManager.getConnection(url);
                  PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setString(1, matricula);
+
+                pstmt.setString(1, idColaborador);
                 ResultSet rs = pstmt.executeQuery();
 
                 if (rs.next()) {
@@ -55,14 +56,14 @@ public class LoginPanel extends JPanel {
                     JFrame consultationFrame = new JFrame("Consultas Agendadas");
                     consultationFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                     consultationFrame.setSize(600, 400);
-                    consultationFrame.add(new ConsultationViewPanel(nomeColaborador, idHorario));
+                    consultationFrame.add(new ConsultationViewPanel(Integer.parseInt(idColaborador)));
                     consultationFrame.setVisible(true);
                 } else {
-                    JOptionPane.showMessageDialog(LoginPanel.this, "Matrícula não encontrada.", "Erro", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(LoginPanel.this, "ID do colaborador não encontrado.", "Erro", JOptionPane.ERROR_MESSAGE);
                 }
 
             } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(LoginPanel.this, "Erro ao verificar matrícula: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(LoginPanel.this, "Erro ao verificar ID do colaborador: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
