@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 
@@ -81,26 +82,56 @@ public class SchedulingPanel extends JPanel {
             }
 
             String url = "jdbc:sqlite:academia.db";
-            String sql = "INSERT INTO TB_CONSULTA(horario_consulta, id_cliente, id_colaborador) VALUES(?, ?, ?)";
+            String sqlFindClientById = "SELECT id_cliente FROM TB_CLIENTE WHERE id_cliente = ?";
+            String sqlFindAvailableCollaborator = 
+                "SELECT id_colaborador FROM TB_COLABORADOR WHERE id_colaborador NOT IN " +
+                "(SELECT id_colaborador FROM TB_CONSULTA WHERE horario_consulta = ?) LIMIT 1";
+            String sqlInsertConsulta = "INSERT INTO TB_CONSULTA(horario_consulta, id_cliente, id_colaborador) VALUES(?, ?, ?)";
 
             try (Connection conn = DriverManager.getConnection(url);
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                // Para simplificar, estamos usando valores fixos para id_cliente e id_colaborador.
-                // Em uma aplicação real, esses valores viriam de uma lógica de seleção/lookup adequada.
-                pstmt.setString(1, date + " " + time); // Combinando data e horário
-                pstmt.setInt(2, 1); // id_cliente, deve ser obtido de uma consulta real
-                pstmt.setInt(3, 1); // id_colaborador, deve ser obtido de uma consulta real
-                pstmt.executeUpdate();
-                JOptionPane.showMessageDialog(SchedulingPanel.this, "Consulta agendada com sucesso!");
+                 PreparedStatement pstmtFindClient = conn.prepareStatement(sqlFindClientById);
+                 PreparedStatement pstmtFindCollaborator = conn.prepareStatement(sqlFindAvailableCollaborator);
+                 PreparedStatement pstmtInsert = conn.prepareStatement(sqlInsertConsulta)) {
+
+                // Encontrar o ID do cliente baseado na matrícula
+                pstmtFindClient.setString(1, matricula);
+                ResultSet rsClient = pstmtFindClient.executeQuery();
+
+                if (rsClient.next()) {
+                    int idCliente = rsClient.getInt("id_cliente");
+
+                    // Encontrar um colaborador disponível
+                    pstmtFindCollaborator.setString(1, date + " " + time);
+                    ResultSet rsCollaborator = pstmtFindCollaborator.executeQuery();
+
+                    if (rsCollaborator.next()) {
+                        int idColaborador = rsCollaborator.getInt("id_colaborador");
+
+                        // Inserir a consulta
+                        pstmtInsert.setString(1, date + " " + time); // Combinando data e horário
+                        pstmtInsert.setInt(2, idCliente); // ID do cliente encontrado
+                        pstmtInsert.setInt(3, idColaborador); // ID do colaborador disponível
+                        pstmtInsert.executeUpdate();
+
+                        JOptionPane.showMessageDialog(SchedulingPanel.this, "Consulta agendada com sucesso!");
+
+                        // Exibir tela de confirmação
+                        JFrame confirmationFrame = new JFrame("Consulta Agendada");
+                        confirmationFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                        confirmationFrame.setSize(300, 200);
+                        confirmationFrame.add(new ConfirmationPanel(name, date, time));
+                        confirmationFrame.setLocationRelativeTo(null); // Centralizar na tela
+                        confirmationFrame.setVisible(true);
+                    } else {
+                        JOptionPane.showMessageDialog(SchedulingPanel.this, "Não há colaboradores disponíveis para o horário selecionado.", "Erro", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(SchedulingPanel.this, "Cliente não encontrado.", "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(SchedulingPanel.this, "Erro ao agendar consulta: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
-
-            // Exibir tela de confirmação
-            JFrame confirmationFrame = new JFrame("Consulta Agendada");
-            confirmationFrame.setSize(300, 200);
-            confirmationFrame.add(new ConfirmationPanel(name, date, time));
-            confirmationFrame.setVisible(true);
         }
     }
 }
